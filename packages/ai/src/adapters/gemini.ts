@@ -5,7 +5,7 @@ import {
 } from '@google/generative-ai';
 import { AIError } from '@opti-core/shared';
 import type { AIIntelligence } from '@opti-core/shared';
-import type { AIClient, AIInput } from '../types.js';
+import type { AIClient, AIInput } from '../types';
 
 const RESPONSE_SCHEMA: GenerationConfig['responseSchema'] = {
   type: SchemaType.OBJECT,

@@ -1,4 +1,4 @@
-import { OptiError } from './errors.js';
+import { OptiError } from './errors';
 
 export interface AppConfig {
   aiProvider: 'gemini' | 'claude' | 'openai';

@@ -1,5 +1,5 @@
-import { evaluateRules } from './rules.js';
-import { calculateScore } from './score.js';
+import { evaluateRules } from './rules';
+import { calculateScore } from './score';
 import type { ExtractedSignals, Finding } from '@opti-core/shared';
 
 export interface RuleEvaluation {
@@ -13,5 +13,5 @@ export function evaluate(signals: ExtractedSignals): RuleEvaluation {
   return { findings, opportunity_score };
 }
 
-export { evaluateRules } from './rules.js';
-export { calculateScore } from './score.js';
+export { evaluateRules } from './rules';
+export { calculateScore } from './score';

@@ -1,2 +1,2 @@
-export { crawl } from './crawler.js';
-export type { CrawlResult } from './crawler.js';
+export { crawl } from './crawler';
+export type { CrawlResult } from './crawler';
