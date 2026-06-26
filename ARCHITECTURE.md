@@ -152,7 +152,8 @@ All persistent state lives in Supabase. Packages that need to read or write data
 - `AIConfig`, `AIResponse`, `AIError` types
 
 **Provider adapters (internal):**
-- `adapters/claude.ts` — Anthropic Claude (default)
+- `adapters/gemini.ts` — Google Gemini Flash (default, see ADR-006)
+- `adapters/claude.ts` — Anthropic Claude
 - `adapters/openai.ts` — OpenAI GPT-4 series
 
 **Rules:**
@@ -302,6 +303,121 @@ The pipeline coordinator in `apps/` is responsible for retry decisions. Packages
 - Outbound HTTP requests (crawler) are made from a fixed egress IP range.
 - LLM prompts must not be constructed using unsanitised user input.
 - All inter-package boundaries validate input with runtime type checks before processing.
+
+---
+
+## 9. MVP Application Architecture
+
+> This section describes Sprint 1. The MVP is a single-user internal tool with no authentication, no billing, and no multi-tenancy.
+
+### 9.1 User Workflow
+
+```
+CSV Upload → Validate → Normalize URLs → Crawl websites → Extract signals
+     → Run rule engine → Call Gemini Flash → Generate BI → Generate outreach
+     → Save lead.json → Display Lead Detail → Copy outreach
+```
+
+### 9.2 Core Modules
+
+| Module | Location | Responsibility |
+|--------|----------|----------------|
+| Config | `packages/shared/src/config.ts` | Read and validate env vars at startup |
+| Logger | `packages/shared/src/logger.ts` | Structured logging via pino |
+| Shared Types | `packages/shared/src/types.ts` | Canonical `Lead`, `Finding`, `Outreach` types |
+| CSV Import | `packages/shared/src/csv.ts` | Parse, validate, normalize URLs |
+| Crawler | `packages/crawler` | Fetch raw HTML, handle errors gracefully |
+| HTML Parser | `packages/parser` | Deterministic signal extraction |
+| Rule Engine | `packages/rules` | Produce structured findings from signals |
+| AI Engine | `packages/ai` | Gemini Flash calls, JSON schema enforcement |
+| Report Generator | `packages/reports` | Build business intelligence structure |
+| Outreach Generator | `packages/outreach` | Generate email, WhatsApp, call brief |
+| Storage Layer | `apps/mvp/src/lib/storage.ts` | Read/write `lead.json` files |
+
+### 9.3 Deterministic Signal Extraction
+
+The HTML parser extracts these signals without AI:
+
+- Page title
+- Meta description
+- H1 (present / missing / multiple)
+- Contact details (phone, email, address)
+- Social links (WhatsApp, LinkedIn, Instagram, Facebook)
+- HTTPS status
+- Forms (contact / lead capture present)
+- Navigation structure
+- Structured data (JSON-LD schema types)
+- `robots.txt` (accessible, disallow rules)
+- `sitemap.xml` (present / missing)
+
+Output: structured JSON passed to the rule engine.
+
+### 9.4 Rule Engine Findings
+
+The rule engine evaluates extracted signals and produces typed findings. Rules do not call AI. Examples:
+
+| Rule ID | Condition | Finding |
+|---------|-----------|---------|
+| `missing-cta` | No contact form and no phone number visible | Weak call-to-action |
+| `weak-trust` | No testimonials schema, no case studies link | Low trust signals |
+| `no-portfolio` | No gallery, no project links | Cannot demonstrate capability |
+| `weak-messaging` | H1 is generic or missing | Unclear value proposition |
+| `poor-contactability` | No phone, no WhatsApp, no contact form | Hard to reach |
+| `missing-whatsapp` | No WhatsApp link detected | Missing preferred channel |
+| `no-schema` | No JSON-LD schema detected | Poor structured data |
+
+### 9.5 AI Responsibilities (Gemini Flash)
+
+Receives structured JSON (findings + signals). Never receives raw HTML.
+
+Returns validated JSON conforming to this structure:
+
+```typescript
+{
+  executive_summary: string;       // 2–3 sentences, business language
+  strengths: string[];             // What they are doing well
+  opportunities: Finding[];        // Prioritized by revenue impact
+  discovery_questions: string[];   // 3 questions for the sales call
+  email: OutreachMessage;          // Subject + body
+  whatsapp: string;                // 2–3 line message
+  call_brief: string;              // One-paragraph briefing
+}
+```
+
+### 9.6 Storage Schema (`lead.json`)
+
+```typescript
+{
+  schema_version: '1.0';
+  domain: string;
+  company_name: string;
+  processed_at: string;            // ISO 8601
+  signals: ExtractedSignals;       // Raw deterministic extraction
+  findings: Finding[];             // Rule engine output
+  opportunity_score: number;       // 0–100, calculated deterministically
+  intelligence: AIIntelligence;    // Gemini Flash output
+}
+```
+
+File path: `data/leads/{domain}.lead.json`
+
+### 9.7 UI Screens
+
+| Screen | Route | Purpose |
+|--------|-------|---------|
+| Home | `/` | List all processed leads, ordered by opportunity score |
+| Upload | `/upload` | CSV file input, validation feedback, trigger processing |
+| Processing | `/processing` | Real-time progress per lead during batch run |
+| Lead Detail | `/leads/[domain]` | Score, summary, findings, email, WhatsApp, call brief, copy buttons |
+
+### 9.8 MVP Constraints
+
+- Single user. No authentication.
+- No billing, no multi-tenancy, no team features.
+- No email sending. No WhatsApp API dispatch.
+- No external CRM integration.
+- Storage is file-based (`data/leads/`). Supabase not used in Sprint 1.
+- If a feature does not directly support the workflow above, it goes to the backlog.
 
 ---
 

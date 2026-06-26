@@ -118,6 +118,54 @@ Build a lightweight declarative rules engine in `packages/rules`. Rules are Type
 
 ---
 
+## ADR-006: Google Gemini Flash as MVP AI Provider
+
+**Date:** 2026-06-26
+**Status:** Accepted — supersedes ADR-003's Claude-first default for MVP
+
+**Context:**
+The MVP processes leads in batches. Each lead triggers multiple AI calls: executive summary, strengths, opportunities, discovery questions, personalised email, WhatsApp message, and call brief. At Claude Sonnet pricing this makes batch processing expensive for an internal tool running on a founder's budget. Speed and cost-per-lead matter more than provider prestige at this stage.
+
+**Options considered:**
+- Claude Sonnet (ADR-003 default) — high quality, higher cost, Anthropic SDK already planned.
+- OpenAI GPT-4o-mini — cheap, but output quality is inconsistent for structured JSON at this task size.
+- Google Gemini Flash — lowest cost of the capable models, native JSON mode with schema enforcement, fast response times, good structured output quality.
+
+**Decision:**
+Use Google Gemini Flash (`gemini-1.5-flash`) as the default AI provider for MVP. The `packages/ai` adapter pattern from ADR-003 is unchanged — only the default adapter changes. A `adapters/gemini.ts` adapter will be added. Claude and OpenAI adapters remain available via the `AI_PROVIDER` environment variable.
+
+**Consequences:**
+- Add `@google/generative-ai` as the only AI SDK dependency in `packages/ai` for MVP.
+- All prompts receive structured JSON input and return validated JSON against a defined schema.
+- Retry once on schema validation failure before surfacing the error.
+- When the platform grows and output quality becomes the constraint, switching to Claude requires changing one environment variable.
+
+---
+
+## ADR-007: File-Based `lead.json` Storage for MVP
+
+**Date:** 2026-06-26
+**Status:** Accepted — scoped to MVP; Supabase migration path preserved
+
+**Context:**
+Full Supabase setup (ADR-002) requires: project provisioning, migration authoring, TypeScript type generation, RLS policy design, and local CLI configuration. This is 1–2 weeks of work before any business value is delivered. The MVP has a single user, no multi-tenancy, and no real-time requirements.
+
+**Options considered:**
+- Supabase from day one (ADR-002) — correct long-term, but delays usable outreach.
+- SQLite via `better-sqlite3` — good middle ground, but still requires schema design and migration tooling.
+- File-based JSON — zero infrastructure, zero dependencies, instantly runnable.
+
+**Decision:**
+Each processed lead is persisted as `data/leads/{domain}.lead.json`. This file is the single source of truth for all rendered content. The application reads and writes these files directly. No database for MVP.
+
+**Consequences:**
+- The `packages/database` package is not used in Sprint 1. It remains in the repository for future use.
+- When multi-user support is needed, migration is one script: read all `.lead.json` files, insert into Supabase.
+- The `lead.json` schema must be versioned (`schema_version` field) so future migrations can handle format changes.
+- No query capability — leads are listed by reading the `data/leads/` directory. Acceptable at MVP scale (< 1,000 leads).
+
+---
+
 ## ADR-005: Flat Package Structure with No Shared State
 
 **Date:** 2026-06-26

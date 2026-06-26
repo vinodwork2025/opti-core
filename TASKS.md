@@ -215,6 +215,33 @@ Every PR must include:
 
 ---
 
+### Sprint 1 — Internal MVP (Revenue-First)
+
+> Goal: founder can upload CSV, process businesses, review intelligence, copy outreach, and begin contacting prospects. Nothing outside this workflow is in scope.
+
+| ID | Task | Status | Owner |
+|----|------|--------|-------|
+| T-100 | Scaffold `apps/mvp` with Next.js 14 App Router and TypeScript | [ ] | — |
+| T-101 | Implement CSV importer: parse, validate columns, normalize URLs | [ ] | — |
+| T-102 | Implement website crawler using `packages/crawler` (no-auth fetch, error isolation) | [ ] | — |
+| T-103 | Implement HTML parser: deterministic extraction of 11 signals into structured JSON | [ ] | — |
+| T-104 | Implement rule engine: 7 finding rules, opportunity score (0–100), pure functions | [ ] | — |
+| T-105 | Add Gemini Flash adapter to `packages/ai` (`adapters/gemini.ts`) | [ ] | — |
+| T-106 | Implement AI engine call: structured JSON in → validated `AIIntelligence` JSON out | [ ] | — |
+| T-107 | Implement outreach generator: email (subject + body), WhatsApp, call brief | [ ] | — |
+| T-108 | Implement `lead.json` storage layer: write, read, list by score | [ ] | — |
+| T-109 | Build pipeline orchestrator: wire CSV → crawl → parse → rules → AI → outreach → save | [ ] | — |
+| T-110 | Build Home screen (`/`): lead list ordered by opportunity score | [ ] | — |
+| T-111 | Build Upload screen (`/upload`): file input, validation feedback, trigger pipeline | [ ] | — |
+| T-112 | Build Processing screen (`/processing`): per-lead progress during batch run | [ ] | — |
+| T-113 | Build Lead Detail screen (`/leads/[domain]`): score, summary, findings, copy buttons | [ ] | — |
+| T-114 | Write unit tests for rule engine (T-104) | [ ] | — |
+| T-115 | Write unit tests for HTML parser signal extraction (T-103) | [ ] | — |
+| T-116 | Write unit tests for CSV importer validation (T-101) | [ ] | — |
+| T-117 | End-to-end test: upload sample CSV → process 1 lead → verify lead.json structure | [ ] | — |
+
+---
+
 ### Phase 6 — Applications and Integration
 
 | ID | Task | Status | Owner |

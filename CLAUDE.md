@@ -333,7 +333,7 @@ Never consider code complete simply because it compiles.
 
 ## 19. What You Must Not Do
 
-- Do not generate UI components (React, Next.js, Vue, Svelte).
+- Do not generate UI components (React, Next.js, Vue, Svelte) inside `packages/` — all UI lives in `apps/`.
 - Do not install packages without explicit instruction.
 - Do not modify `package.json`, `turbo.json`, or `tsconfig.json` without explicit instruction.
 - Do not change database schema without a corresponding migration file in `supabase/migrations/`.
