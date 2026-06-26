@@ -41,10 +41,17 @@ This changelog follows the [Keep a Changelog](https://keepachangelog.com/en/1.1.
 ### Added
 - Initial repository scaffold with monorepo structure (`apps/`, `packages/`, `docs/`, `scripts/`, `supabase/`, `tests/`).
 - Root documentation: `README.md`, `CLAUDE.md`, `ARCHITECTURE.md`, `DECISIONS.md`, `TASKS.md`, `CHANGELOG.md`.
-- Architecture Decision Records: ADR-001 (Turborepo), ADR-002 (Supabase), ADR-003 (AI abstraction), ADR-004 (rules engine), ADR-005 (stateless packages).
+- Architecture Decision Records: ADR-001 (Turborepo), ADR-002 (Supabase), ADR-003 (AI abstraction), ADR-004 (rules engine), ADR-005 (stateless packages), ADR-006 (Gemini Flash), ADR-007 (Supabase JSONB storage).
 - Package directory stubs: `packages/ai`, `packages/analyzer`, `packages/crawler`, `packages/database`, `packages/outreach`, `packages/parser`, `packages/reports`, `packages/rules`, `packages/shared`.
 - CI/CD directory stub: `.github/workflows/`.
 - Claude Code settings stub: `.claude/settings.json`.
+- `packages/shared`: zero-dependency types, errors, logger, config, utils. (`packages/shared`)
+- `packages/ai`: Gemini 1.5 Flash adapter with JSON schema enforcement and 2-attempt retry. (`packages/ai`)
+- `packages/crawler`: fetch-based crawler with timeout, robots.txt and sitemap.xml checks. (`packages/crawler`)
+- `packages/parser`: cheerio-based deterministic extraction of 11 signals from HTML. (`packages/parser`)
+- `packages/rules`: 7 business finding rules + opportunity score calculation (0–100). (`packages/rules`)
+- `apps/mvp`: Next.js 14 App Router internal MVP — CSV upload → crawl → parse → rules → Gemini → Supabase → Lead Detail with copy buttons. (`apps/mvp`)
+- Supabase migration `0001_leads_jobs.sql`: `leads` and `jobs` tables with JSONB data columns.
 
 ---
 
