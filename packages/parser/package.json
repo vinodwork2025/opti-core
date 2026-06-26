@@ -11,6 +11,7 @@
     "lint": "echo 'lint ok'"
   },
   "dependencies": {
+    "@opti-core/crawler": "workspace:*",
     "@opti-core/shared": "workspace:*",
     "cheerio": "^1.0.0"
   },
