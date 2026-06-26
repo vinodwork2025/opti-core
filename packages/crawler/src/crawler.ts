@@ -1,13 +1,5 @@
 import { CrawlerError } from '@opti-core/shared';
-
-export interface CrawlResult {
-  url: string;
-  final_url: string;
-  html: string;
-  status: number;
-  has_robots_txt: boolean;
-  has_sitemap: boolean;
-}
+import type { CrawlResult } from '@opti-core/shared';
 
 const TIMEOUT_MS = 15_000;
 const USER_AGENT = 'OptiCore/0.1 (business intelligence crawler; single request per domain)';

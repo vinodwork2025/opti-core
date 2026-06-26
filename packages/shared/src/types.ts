@@ -3,6 +3,15 @@ export interface CsvRow {
   url: string;
 }
 
+export interface CrawlResult {
+  url: string;
+  final_url: string;
+  html: string;
+  status: number;
+  has_robots_txt: boolean;
+  has_sitemap: boolean;
+}
+
 export interface ExtractedSignals {
   title: string | null;
   meta_description: string | null;

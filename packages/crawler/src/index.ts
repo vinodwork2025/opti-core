@@ -1,2 +1,2 @@
 export { crawl } from './crawler';
-export type { CrawlResult } from './crawler';
+export type { CrawlResult } from '@opti-core/shared';

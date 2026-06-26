@@ -1,6 +1,5 @@
 import * as cheerio from 'cheerio';
-import type { ExtractedSignals } from '@opti-core/shared';
-import type { CrawlResult } from '@opti-core/crawler';
+import type { ExtractedSignals, CrawlResult } from '@opti-core/shared';
 
 const PHONE_RE = /(?:\+91[\s-]?)?(?:\(0\d{2,4}\)[\s-]?)?\d{10}|\d{3,4}[\s-]\d{3,4}[\s-]\d{4}/g;
 const EMAIL_RE = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
