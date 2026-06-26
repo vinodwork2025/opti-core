@@ -1,13 +1,12 @@
 import {
   GoogleGenerativeAI,
   SchemaType,
-  type GenerationConfig,
 } from '@google/generative-ai';
 import { AIError } from '@opti-core/shared';
 import type { AIIntelligence } from '@opti-core/shared';
 import type { AIClient, AIInput } from '../types';
 
-const RESPONSE_SCHEMA: GenerationConfig['responseSchema'] = {
+const RESPONSE_SCHEMA = {
   type: SchemaType.OBJECT,
   properties: {
     executive_summary: { type: SchemaType.STRING },

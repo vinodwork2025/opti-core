@@ -1,17 +1,17 @@
 import type { Lead, ProcessingJob } from '@opti-core/shared';
-import { supabase } from './supabase';
+import { getSupabase } from './supabase';
 
 // --- Leads ---
 
 export async function saveLead(lead: Lead): Promise<void> {
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('leads')
     .upsert({ domain: lead.domain, data: lead }, { onConflict: 'domain' });
   if (error) throw new Error(`saveLead failed: ${error.message}`);
 }
 
 export async function getLead(domain: string): Promise<Lead | null> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('leads')
     .select('data')
     .eq('domain', domain)
@@ -21,7 +21,7 @@ export async function getLead(domain: string): Promise<Lead | null> {
 }
 
 export async function listLeads(): Promise<Lead[]> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('leads')
     .select('data')
     .order('created_at', { ascending: false });
@@ -33,14 +33,14 @@ export async function listLeads(): Promise<Lead[]> {
 // --- Jobs ---
 
 export async function saveJob(job: ProcessingJob): Promise<void> {
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('jobs')
     .upsert({ job_id: job.job_id, data: job, updated_at: new Date().toISOString() });
   if (error) throw new Error(`saveJob failed: ${error.message}`);
 }
 
 export async function getJob(jobId: string): Promise<ProcessingJob | null> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('jobs')
     .select('data')
     .eq('job_id', jobId)

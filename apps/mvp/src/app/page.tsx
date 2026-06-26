@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { listLeads } from '@/lib/storage';
 import type { Lead } from '@opti-core/shared';
 
+export const dynamic = 'force-dynamic';
+
 function ScoreBadge({ score }: { score: number }) {
   if (score >= 70) {
     return (

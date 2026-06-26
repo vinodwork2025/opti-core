@@ -4,6 +4,8 @@ import { getLead } from '@/lib/storage';
 import type { Finding } from '@opti-core/shared';
 import { CopyButton } from '@/components/CopyButton';
 
+export const dynamic = 'force-dynamic';
+
 function ScoreRing({ score }: { score: number }) {
   const color = score >= 70 ? 'text-green-600' : score >= 40 ? 'text-yellow-600' : 'text-gray-500';
   const label = score >= 70 ? 'High Opportunity' : score >= 40 ? 'Good Opportunity' : 'Low Priority';
