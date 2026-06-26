@@ -142,27 +142,35 @@ Use Google Gemini Flash (`gemini-1.5-flash`) as the default AI provider for MVP.
 
 ---
 
-## ADR-007: File-Based `lead.json` Storage for MVP
+## ADR-007: Supabase JSONB Storage for MVP (Vercel-Compatible)
 
 **Date:** 2026-06-26
-**Status:** Accepted — scoped to MVP; Supabase migration path preserved
+**Status:** Accepted — supersedes file-based approach; aligns with Vercel deployment target
 
 **Context:**
-Full Supabase setup (ADR-002) requires: project provisioning, migration authoring, TypeScript type generation, RLS policy design, and local CLI configuration. This is 1–2 weeks of work before any business value is delivered. The MVP has a single user, no multi-tenancy, and no real-time requirements.
+The MVP is deployed on Vercel. Vercel's serverless runtime has an ephemeral filesystem — files written during one request are not available in the next. File-based `lead.json` storage does not work. A persistent store is required. Supabase is already in the architecture (ADR-002) and the team has existing Supabase projects.
 
 **Options considered:**
-- Supabase from day one (ADR-002) — correct long-term, but delays usable outreach.
-- SQLite via `better-sqlite3` — good middle ground, but still requires schema design and migration tooling.
-- File-based JSON — zero infrastructure, zero dependencies, instantly runnable.
+- File-based JSON — zero config, works locally only. Ruled out: incompatible with Vercel.
+- Vercel KV (Redis) — integrated into Vercel dashboard, free tier. Ruled out: adds a new vendor; Supabase already planned.
+- Vercel Postgres — integrated, free tier. Ruled out: same reason as KV — Supabase already chosen.
+- Supabase — already in architecture, team familiarity, managed Postgres with JSONB support.
 
 **Decision:**
-Each processed lead is persisted as `data/leads/{domain}.lead.json`. This file is the single source of truth for all rendered content. The application reads and writes these files directly. No database for MVP.
+Use Supabase with a minimal two-table schema:
+- `leads` — `domain TEXT PRIMARY KEY, data JSONB NOT NULL, created_at TIMESTAMPTZ`
+- `jobs` — `job_id TEXT PRIMARY KEY, data JSONB NOT NULL, updated_at TIMESTAMPTZ`
+
+The `data` column stores the full `Lead` or `ProcessingJob` object as JSONB. This preserves the lead.json concept (one document per lead) while using a Vercel-compatible store. No RLS for MVP — single user, no auth.
 
 **Consequences:**
-- The `packages/database` package is not used in Sprint 1. It remains in the repository for future use.
-- When multi-user support is needed, migration is one script: read all `.lead.json` files, insert into Supabase.
-- The `lead.json` schema must be versioned (`schema_version` field) so future migrations can handle format changes.
-- No query capability — leads are listed by reading the `data/leads/` directory. Acceptable at MVP scale (< 1,000 leads).
+- Supabase project required before first deployment. Env vars: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
+- Migration in `supabase/migrations/0001_leads_jobs.sql` — two `CREATE TABLE` statements.
+- The `packages/database` package is not used in Sprint 1. Storage calls go directly through the Supabase JS client inside `apps/mvp/src/lib/storage.ts`.
+- When multi-tenancy is needed: add `user_id` column, enable RLS — no schema redesign required.
+
+**Processing model (Vercel constraint):**
+Vercel serverless functions have a 60-second timeout. Batch processing in a single background job is not viable. Instead, the browser drives processing: it calls `/api/process` once per lead sequentially, waiting for each response before sending the next. Each call handles one full pipeline cycle (crawl → parse → rules → AI → save) and completes within the timeout. If the browser tab closes, processing stops — acceptable for a single-user internal tool.
 
 ---
 

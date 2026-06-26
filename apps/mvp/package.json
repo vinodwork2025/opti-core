@@ -1,0 +1,32 @@
+{
+  "name": "@opti-core/mvp",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@opti-core/ai": "workspace:*",
+    "@opti-core/crawler": "workspace:*",
+    "@opti-core/parser": "workspace:*",
+    "@opti-core/rules": "workspace:*",
+    "@opti-core/shared": "workspace:*",
+    "@supabase/supabase-js": "^2.45.0",
+    "next": "14.2.5",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.40",
+    "tailwindcss": "^3.4.7",
+    "typescript": "^5.5.0"
+  }
+}
