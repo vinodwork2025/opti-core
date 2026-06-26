@@ -1,0 +1,6 @@
+{
+  "installCommand": "npm install -g pnpm@9.15.0 && pnpm install",
+  "buildCommand": "pnpm --filter @opti-core/mvp build",
+  "outputDirectory": "apps/mvp/.next",
+  "framework": "nextjs"
+}
