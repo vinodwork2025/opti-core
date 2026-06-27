@@ -2,49 +2,91 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import type { CsvRow } from '@opti-core/shared';
+
+interface PreviewRow {
+  company_name: string;
+  url: string;
+  no_website: boolean;
+}
 
 const SAMPLE_CSV = `company_name,url
 Acme Interiors,acmeinteriors.in
 Star Builders,starbuilders.com`;
+
+function parseLine(line: string): string[] {
+  const values: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  for (const char of line) {
+    if (char === '"') { inQuotes = !inQuotes; }
+    else if (char === ',' && !inQuotes) { values.push(current.trim()); current = ''; }
+    else { current += char; }
+  }
+  values.push(current.trim());
+  return values;
+}
+
+function clean(v: string | undefined): string {
+  return (v ?? '').replace(/^"+|"+$/g, '').trim();
+}
 
 export default function UploadPage() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [preview, setPreview] = useState<CsvRow[]>([]);
+  const [preview, setPreview] = useState<PreviewRow[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [formatDetected, setFormatDetected] = useState<'apify' | 'standard' | null>(null);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setError('');
     setPreview([]);
+    setFormatDetected(null);
 
     try {
       const text = await file.text();
       const lines = text.trim().split(/\r?\n/);
       if (lines.length < 2) throw new Error('CSV must have a header row and at least one data row');
 
-      const headers = lines[0].split(',').map((h) => h.trim().toLowerCase().replace(/"/g, ''));
-      const companyIdx = headers.indexOf('company_name');
-      const urlIdx = headers.indexOf('url');
+      const headers = parseLine(lines[0]).map((h) => clean(h).toLowerCase());
+      const isApify = headers.includes('title') && headers.includes('website');
+      const isStandard = headers.includes('company_name') && headers.includes('url');
 
-      if (companyIdx === -1 || urlIdx === -1) {
-        throw new Error('CSV must have columns: company_name, url');
+      if (!isApify && !isStandard) {
+        throw new Error(
+          'Unrecognised format. Expected Apify CSV (title, website columns) or standard CSV (company_name, url columns).',
+        );
       }
 
-      const rows: CsvRow[] = lines
-        .slice(1)
-        .filter((l) => l.trim())
-        .map((l) => {
-          const parts = l.split(',');
-          return {
-            company_name: (parts[companyIdx] ?? '').replace(/"/g, '').trim(),
-            url: (parts[urlIdx] ?? '').replace(/"/g, '').trim(),
-          };
-        });
+      setFormatDetected(isApify ? 'apify' : 'standard');
 
+      const rows: PreviewRow[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i]?.trim();
+        if (!line) continue;
+        const vals = parseLine(line);
+
+        let company_name: string;
+        let url: string;
+
+        if (isApify) {
+          company_name = clean(vals[headers.indexOf('title')]);
+          url = clean(vals[headers.indexOf('website')]);
+        } else {
+          company_name = clean(vals[headers.indexOf('company_name')]);
+          url = clean(vals[headers.indexOf('url')]);
+        }
+
+        if (!company_name) continue;
+        rows.push({ company_name, url, no_website: !url });
+      }
+
+      if (rows.length === 0) throw new Error('No data rows found in CSV');
+
+      setTotalCount(rows.length);
       setPreview(rows.slice(0, 5));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Invalid CSV');
@@ -64,7 +106,7 @@ export default function UploadPage() {
       formData.append('file', file);
 
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
-      const data = (await res.json()) as { job_id?: string; rows?: CsvRow[]; error?: string };
+      const data = (await res.json()) as { job_id?: string; error?: string };
 
       if (!res.ok || !data.job_id) {
         throw new Error(data.error ?? 'Upload failed');
@@ -85,12 +127,16 @@ export default function UploadPage() {
     a.click();
   }
 
+  const hotCount = preview.filter((r) => r.no_website).length;
+
   return (
     <div className="max-w-2xl">
       <h1 className="text-2xl font-bold text-gray-900 mb-1">Import Leads</h1>
       <p className="text-gray-500 text-sm mb-6">
-        Upload a CSV with columns: <code className="bg-gray-100 px-1 rounded">company_name</code> and{' '}
-        <code className="bg-gray-100 px-1 rounded">url</code>
+        Accepts <strong>Apify Google Maps CSV</strong> or standard CSV with{' '}
+        <code className="bg-gray-100 px-1 rounded">company_name</code> +{' '}
+        <code className="bg-gray-100 px-1 rounded">url</code> columns.
+        Leads with no website are processed as <span className="font-semibold text-red-600">HOT</span> leads.
       </p>
 
       <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
@@ -111,22 +157,45 @@ export default function UploadPage() {
           </div>
         )}
 
+        {formatDetected && (
+          <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg text-sm flex items-center justify-between">
+            <span>
+              Format: <strong>{formatDetected === 'apify' ? 'Apify Google Maps' : 'Standard'}</strong>
+              {' · '}{totalCount} leads
+              {hotCount > 0 && (
+                <span className="ml-2 font-bold text-red-600">{hotCount} HOT (no website)</span>
+              )}
+            </span>
+          </div>
+        )}
+
         {preview.length > 0 && (
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">Preview ({preview.length} of uploaded rows)</p>
+            <p className="text-sm font-medium text-gray-700 mb-2">
+              Preview (first {preview.length} of {totalCount})
+            </p>
             <div className="border border-gray-200 rounded-lg overflow-hidden">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-3 py-2 text-left text-gray-600 font-medium">Company</th>
-                    <th className="px-3 py-2 text-left text-gray-600 font-medium">URL</th>
+                    <th className="px-3 py-2 text-left text-gray-600 font-medium">Website</th>
                   </tr>
                 </thead>
                 <tbody>
                   {preview.map((row, i) => (
                     <tr key={i} className="border-t border-gray-100">
-                      <td className="px-3 py-2 text-gray-900">{row.company_name}</td>
-                      <td className="px-3 py-2 text-gray-500">{row.url}</td>
+                      <td className="px-3 py-2 text-gray-900 flex items-center gap-2">
+                        {row.company_name}
+                        {row.no_website && (
+                          <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700">
+                            HOT
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-gray-500">
+                        {row.url || <span className="italic text-red-400">No website</span>}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -138,7 +207,7 @@ export default function UploadPage() {
         <div className="flex gap-3 pt-1">
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || preview.length === 0}
             className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg font-semibold text-sm hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? 'Uploading…' : 'Process Leads'}
@@ -148,7 +217,7 @@ export default function UploadPage() {
             onClick={downloadSample}
             className="px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
           >
-            Download Sample
+            Sample CSV
           </button>
         </div>
       </form>
