@@ -48,6 +48,7 @@ function ProcessingContent() {
             body: JSON.stringify({
               company_name: lead.company_name,
               url: lead.original_url,
+              apify_meta: lead.apify_meta,
             }),
           });
           const result = (await processRes.json()) as { error?: string };

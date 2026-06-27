@@ -44,13 +44,29 @@ function buildPrompt(input: AIInput): string {
     `Title: ${input.signals.title ?? 'Not found'}`,
     `H1: ${input.signals.h1 ?? 'Missing'}`,
     `HTTPS: ${input.signals.is_https ? 'Yes' : 'No'}`,
-    `Contact phone: ${input.signals.contact_phone ?? 'Not found'}`,
+    `Contact phone: ${input.signals.contact_phone ?? input.apify_meta?.gmaps_phone ?? 'Not found'}`,
     `Contact email: ${input.signals.contact_email ?? 'Not found'}`,
     `WhatsApp: ${input.signals.whatsapp_link ? 'Present' : 'Missing'}`,
     `Contact form: ${input.signals.has_contact_form ? 'Present' : 'Missing'}`,
     `Schema types: ${input.signals.schema_types.length > 0 ? input.signals.schema_types.join(', ') : 'None'}`,
     `Social links: ${input.signals.social_links.length > 0 ? input.signals.social_links.join(', ') : 'None'}`,
   ].join('\n');
+
+  const apifySection = input.apify_meta
+    ? (() => {
+        const m = input.apify_meta;
+        const lines: string[] = [];
+        if (m.google_rating !== undefined)
+          lines.push(`Google Rating: ${m.google_rating}/5 (${m.review_count ?? 0} reviews)`);
+        if (m.categories?.length)
+          lines.push(`Business Categories: ${m.categories.join(', ')}`);
+        if (m.city || m.state)
+          lines.push(`Location: ${[m.city, m.state].filter(Boolean).join(', ')}`);
+        if (m.street) lines.push(`Address: ${m.street}`);
+        if (m.gmaps_phone) lines.push(`Phone (Google): ${m.gmaps_phone}`);
+        return lines.length > 0 ? `\nGOOGLE BUSINESS PROFILE:\n${lines.join('\n')}` : '';
+      })()
+    : '';
 
   return `You are a senior business development consultant at Optiscale Advisors, a digital advisory firm that helps businesses in India grow their customer base through better digital presence, AI search visibility, and lead conversion.
 
@@ -62,7 +78,7 @@ OPPORTUNITY SCORE: ${input.opportunity_score}/100 (higher = more room to help)
 
 WEBSITE SIGNALS:
 ${signalsSummary}
-
+${apifySection}
 FINDINGS FROM ANALYSIS:
 ${findingsSummary || 'No significant issues found.'}
 

@@ -1,6 +1,17 @@
+export interface ApifyMeta {
+  google_rating?: number;
+  review_count?: number;
+  categories?: string[];
+  city?: string;
+  state?: string;
+  street?: string;
+  gmaps_phone?: string;
+}
+
 export interface CsvRow {
   company_name: string;
   url: string;
+  apify_meta?: ApifyMeta;
 }
 
 export interface CrawlResult {
@@ -77,5 +88,6 @@ export interface ProcessingJob {
     original_url: string;
     status: 'pending' | 'processing' | 'done' | 'failed';
     error?: string;
+    apify_meta?: ApifyMeta;
   }>;
 }

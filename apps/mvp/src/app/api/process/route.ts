@@ -4,11 +4,15 @@ import { parse } from '@opti-core/parser';
 import { evaluate } from '@opti-core/rules';
 import { createAIClient } from '@opti-core/ai';
 import { slugify, normalizeUrl, logger } from '@opti-core/shared';
-import type { Lead } from '@opti-core/shared';
+import type { Lead, ApifyMeta } from '@opti-core/shared';
 import { saveLead } from '@/lib/storage';
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const { company_name, url } = (await req.json()) as { company_name: string; url: string };
+  const { company_name, url, apify_meta } = (await req.json()) as {
+    company_name: string;
+    url: string;
+    apify_meta?: ApifyMeta;
+  };
 
   if (!company_name || !url) {
     return NextResponse.json({ error: 'company_name and url are required' }, { status: 400 });
@@ -33,6 +37,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       signals,
       findings,
       opportunity_score,
+      apify_meta,
     });
 
     const lead: Lead = {

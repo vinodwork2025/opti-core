@@ -33,6 +33,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         company_name: r.company_name,
         original_url: r.url,
         status: 'pending',
+        ...(r.apify_meta ? { apify_meta: r.apify_meta } : {}),
       })),
     };
 
