@@ -65,7 +65,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       opportunity_score = evaluation.opportunity_score;
     }
 
-    const apiKey = process.env['GEMINI_API_KEY'] ?? '';
+    const apiKey = process.env['GEMINI_API_KEY'];
+    if (!apiKey) throw new Error('GEMINI_API_KEY environment variable is not set');
     const aiClient = createAIClient(apiKey);
     const intelligence = await aiClient.generateIntelligence({
       company_name,

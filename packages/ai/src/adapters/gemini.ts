@@ -117,19 +117,22 @@ export class GeminiClient implements AIClient {
 
     let lastError: Error | null = null;
 
-    for (let attempt = 1; attempt <= 2; attempt++) {
+    for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         const result = await model.generateContent(buildPrompt(input));
         const text = result.response.text();
         return JSON.parse(text) as AIIntelligence;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        if (attempt === 1) continue;
+        if (attempt < 3) {
+          await new Promise((r) => setTimeout(r, attempt * 1000));
+          continue;
+        }
       }
     }
 
     throw new AIError(
-      `Gemini failed after 2 attempts: ${lastError?.message ?? 'unknown'}`,
+      `Gemini error: ${lastError?.message ?? 'unknown error'}`,
       { domain: input.domain },
       true,
     );
