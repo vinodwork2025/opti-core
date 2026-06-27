@@ -106,7 +106,7 @@ export class GeminiClient implements AIClient {
   }
 
   async generateIntelligence(input: AIInput): Promise<AIIntelligence> {
-    const models = ['gemini-2.5-flash', 'gemini-2.0-flash-lite'];
+    const models = ['gemini-2.5-flash', 'gemini-2.5-pro'];
     const generationConfig = {
       responseMimeType: 'application/json',
       responseSchema: RESPONSE_SCHEMA,
@@ -128,7 +128,7 @@ export class GeminiClient implements AIClient {
           const is404 = lastError.message.includes('404') || lastError.message.includes('not found') || lastError.message.includes('no longer available');
           if (is404) break; // model gone — try next model immediately
           if (attempt < 3 && is503) {
-            await new Promise((r) => setTimeout(r, attempt * 8000));
+            await new Promise((r) => setTimeout(r, attempt * 15000));
             continue;
           }
         }
