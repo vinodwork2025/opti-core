@@ -75,6 +75,11 @@ function ProcessingContent() {
         }
 
         setJob({ ...updatedJob });
+
+        // Stay under Gemini free-tier 15 RPM limit
+        if (i < updatedJob.leads.length - 1) {
+          await new Promise((r) => setTimeout(r, 4000));
+        }
       }
 
       updatedJob.status = 'done';
