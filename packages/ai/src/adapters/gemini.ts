@@ -107,7 +107,7 @@ export class GeminiClient implements AIClient {
 
   async generateIntelligence(input: AIInput): Promise<AIIntelligence> {
     const model = this.genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-2.5-flash',
       generationConfig: {
         responseMimeType: 'application/json',
         responseSchema: RESPONSE_SCHEMA,
