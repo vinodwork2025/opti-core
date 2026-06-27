@@ -17,7 +17,8 @@ export async function getLead(domain: string): Promise<Lead | null> {
     .eq('domain', domain)
     .single();
   if (error || !data) return null;
-  return data.data as Lead;
+  const raw = data.data;
+  return (typeof raw === 'string' ? JSON.parse(raw) : raw) as Lead;
 }
 
 export async function listLeads(): Promise<Lead[]> {
