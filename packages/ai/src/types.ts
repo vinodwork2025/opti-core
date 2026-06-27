@@ -7,6 +7,7 @@ export interface AIInput {
   findings: Finding[];
   opportunity_score: number;
   apify_meta?: ApifyMeta;
+  no_website?: boolean;
 }
 
 export interface AIClient {

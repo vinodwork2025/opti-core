@@ -54,7 +54,6 @@ function parseApifyCsv(headers: string[], lines: string[]): CsvRow[] {
     const url = cleanVal(values[websiteIdx]);
 
     if (!company_name) continue;
-    if (!url) continue; // no website = can't crawl, skip silently
 
     const apify_meta: ApifyMeta = {};
 
@@ -82,7 +81,7 @@ function parseApifyCsv(headers: string[], lines: string[]): CsvRow[] {
       .filter((v, pos, arr) => arr.indexOf(v) === pos); // dedupe
     if (cats.length > 0) apify_meta.categories = cats;
 
-    rows.push({ company_name, url, apify_meta });
+    rows.push({ company_name, url, no_website: !url || undefined, apify_meta });
   }
 
   return rows;
@@ -128,11 +127,7 @@ export function parseCsv(content: string): CsvRow[] {
     : parseStandardCsv(headers, lines);
 
   if (rows.length === 0) {
-    throw new ValidationError(
-      isApify
-        ? 'No leads with websites found in CSV. Leads without websites are skipped.'
-        : 'CSV contains no data rows',
-    );
+    throw new ValidationError('CSV contains no data rows');
   }
 
   return rows;

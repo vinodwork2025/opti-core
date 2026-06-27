@@ -68,12 +68,16 @@ function buildPrompt(input: AIInput): string {
       })()
     : '';
 
+  const noWebsiteWarning = input.no_website
+    ? `\n⚠️ CRITICAL: This business has NO WEBSITE at all. They are completely invisible online — cannot be found on Google search, AI assistants, or any digital channel. This is a maximum-priority opportunity. Frame your entire report around helping them establish their first digital presence.\n`
+    : '';
+
   return `You are a senior business development consultant at Optiscale Advisors, a digital advisory firm that helps businesses in India grow their customer base through better digital presence, AI search visibility, and lead conversion.
 
-You have analyzed the website of a prospective client. Your job is to prepare a business intelligence report that helps our founder have a credible, informed, and personalized first conversation with this business.
-
+You have analyzed the ${input.no_website ? 'digital footprint' : 'website'} of a prospective client. Your job is to prepare a business intelligence report that helps our founder have a credible, informed, and personalized first conversation with this business.
+${noWebsiteWarning}
 COMPANY: ${input.company_name}
-WEBSITE: ${input.domain}
+WEBSITE: ${input.no_website ? 'NONE — business has no website' : input.domain}
 OPPORTUNITY SCORE: ${input.opportunity_score}/100 (higher = more room to help)
 
 WEBSITE SIGNALS:

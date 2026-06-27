@@ -39,8 +39,17 @@ function LeadRow({ lead }: { lead: Lead }) {
       <div className="bg-white border border-gray-200 rounded-lg px-5 py-4 hover:border-blue-300 hover:shadow-sm transition-all">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="font-semibold text-gray-900 truncate">{lead.company_name}</p>
-            <p className="text-sm text-gray-500 truncate">{lead.domain}</p>
+            <div className="flex items-center gap-2">
+              <p className="font-semibold text-gray-900 truncate">{lead.company_name}</p>
+              {lead.no_website && (
+                <span className="shrink-0 text-xs font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700">
+                  HOT
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-gray-500 truncate">
+              {lead.no_website ? 'No website' : lead.domain}
+            </p>
             {topFinding && (
               <p className="text-sm text-gray-600 mt-1 truncate">
                 <span className="text-red-500 font-medium">↑ </span>

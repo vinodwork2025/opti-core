@@ -57,8 +57,17 @@ export default async function LeadDetailPage({ params }: { params: { domain: str
         <Link href="/" className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1 mb-3">
           ← All Leads
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">{lead.company_name}</h1>
-        <p className="text-gray-500 text-sm">{lead.domain} · Analysed {date}</p>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-gray-900">{lead.company_name}</h1>
+          {lead.no_website && (
+            <span className="text-sm font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">
+              HOT — No Website
+            </span>
+          )}
+        </div>
+        <p className="text-gray-500 text-sm">
+          {lead.no_website ? 'No website' : lead.domain} · Analysed {date}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">

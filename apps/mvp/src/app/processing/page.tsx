@@ -48,6 +48,7 @@ function ProcessingContent() {
             body: JSON.stringify({
               company_name: lead.company_name,
               url: lead.original_url,
+              no_website: lead.no_website,
               apify_meta: lead.apify_meta,
             }),
           });
@@ -123,8 +124,17 @@ function ProcessingContent() {
               <StatusIcon status={lead.status} />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-gray-900 truncate">{lead.company_name}</p>
-              <p className="text-xs text-gray-500 truncate">{lead.original_url}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium text-gray-900 truncate">{lead.company_name}</p>
+                {lead.no_website && (
+                  <span className="shrink-0 text-xs font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700">
+                    HOT
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 truncate">
+                {lead.no_website ? 'No website' : lead.original_url}
+              </p>
             </div>
             {lead.error && (
               <p className="text-xs text-red-500 shrink-0 max-w-40 truncate">{lead.error}</p>

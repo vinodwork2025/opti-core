@@ -4,30 +4,66 @@ import { parse } from '@opti-core/parser';
 import { evaluate } from '@opti-core/rules';
 import { createAIClient } from '@opti-core/ai';
 import { slugify, normalizeUrl, logger } from '@opti-core/shared';
-import type { Lead, ApifyMeta } from '@opti-core/shared';
+import type { Lead, ApifyMeta, ExtractedSignals } from '@opti-core/shared';
 import { saveLead } from '@/lib/storage';
 
+function noWebsiteSignals(apify_meta?: ApifyMeta): ExtractedSignals {
+  return {
+    title: null,
+    meta_description: null,
+    h1: null,
+    h1_count: 0,
+    contact_phone: apify_meta?.gmaps_phone ?? null,
+    contact_email: null,
+    contact_address: apify_meta?.street ?? null,
+    whatsapp_link: null,
+    social_links: [],
+    is_https: false,
+    has_contact_form: false,
+    schema_types: [],
+    has_robots_txt: false,
+    has_sitemap: false,
+  };
+}
+
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const { company_name, url, apify_meta } = (await req.json()) as {
+  const { company_name, url, no_website, apify_meta } = (await req.json()) as {
     company_name: string;
     url: string;
+    no_website?: boolean;
     apify_meta?: ApifyMeta;
   };
 
-  if (!company_name || !url) {
-    return NextResponse.json({ error: 'company_name and url are required' }, { status: 400 });
+  if (!company_name) {
+    return NextResponse.json({ error: 'company_name is required' }, { status: 400 });
+  }
+  if (!no_website && !url) {
+    return NextResponse.json({ error: 'url is required' }, { status: 400 });
   }
 
-  const domain = slugify(url);
+  const domain = no_website ? slugify(company_name) : slugify(url);
 
   try {
-    const normalizedUrl = normalizeUrl(url);
+    let signals: ExtractedSignals;
+    let findings: ReturnType<typeof evaluate>['findings'];
+    let opportunity_score: number;
 
-    logger.info('Processing lead', { domain, url: normalizedUrl });
-
-    const crawlResult = await crawl(normalizedUrl);
-    const signals = parse(crawlResult);
-    const { findings, opportunity_score } = evaluate(signals);
+    if (no_website) {
+      logger.info('Processing no-website lead', { domain });
+      signals = noWebsiteSignals(apify_meta);
+      const evaluation = evaluate(signals);
+      findings = evaluation.findings;
+      // No website = maximum opportunity — floor at 85
+      opportunity_score = Math.max(evaluation.opportunity_score, 85);
+    } else {
+      const normalizedUrl = normalizeUrl(url);
+      logger.info('Processing lead', { domain, url: normalizedUrl });
+      const crawlResult = await crawl(normalizedUrl);
+      signals = parse(crawlResult);
+      const evaluation = evaluate(signals);
+      findings = evaluation.findings;
+      opportunity_score = evaluation.opportunity_score;
+    }
 
     const apiKey = process.env['GEMINI_API_KEY'] ?? '';
     const aiClient = createAIClient(apiKey);
@@ -38,6 +74,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       findings,
       opportunity_score,
       apify_meta,
+      no_website,
     });
 
     const lead: Lead = {
@@ -45,6 +82,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       domain,
       company_name,
       processed_at: new Date().toISOString(),
+      ...(no_website ? { no_website: true } : {}),
       signals,
       findings,
       opportunity_score,
@@ -53,7 +91,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     await saveLead(lead);
 
-    logger.info('Lead processed', { domain, opportunity_score });
+    logger.info('Lead processed', { domain, opportunity_score, no_website });
 
     return NextResponse.json({ success: true, domain, opportunity_score });
   } catch (error) {

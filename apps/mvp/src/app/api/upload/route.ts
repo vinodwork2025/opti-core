@@ -29,9 +29,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       failed: 0,
       status: 'pending',
       leads: rows.map((r) => ({
-        domain: slugify(r.url),
+        domain: r.no_website ? slugify(r.company_name) : slugify(r.url),
         company_name: r.company_name,
         original_url: r.url,
+        ...(r.no_website ? { no_website: true } : {}),
         status: 'pending',
         ...(r.apify_meta ? { apify_meta: r.apify_meta } : {}),
       })),

@@ -11,6 +11,7 @@ export interface ApifyMeta {
 export interface CsvRow {
   company_name: string;
   url: string;
+  no_website?: boolean;
   apify_meta?: ApifyMeta;
 }
 
@@ -69,6 +70,7 @@ export interface Lead {
   domain: string;
   company_name: string;
   processed_at: string;
+  no_website?: boolean;
   signals: ExtractedSignals;
   findings: Finding[];
   opportunity_score: number;
@@ -86,6 +88,7 @@ export interface ProcessingJob {
     domain: string;
     company_name: string;
     original_url: string;
+    no_website?: boolean;
     status: 'pending' | 'processing' | 'done' | 'failed';
     error?: string;
     apify_meta?: ApifyMeta;
