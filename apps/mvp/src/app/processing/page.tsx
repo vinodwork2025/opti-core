@@ -55,6 +55,7 @@ function ProcessingContent() {
           const result = (await processRes.json()) as { error?: string };
           const status = processRes.ok ? ('done' as const) : ('failed' as const);
           const error = result.error;
+          if (error) console.error(`[opti-core] ${lead.company_name}:`, error);
 
           await fetch(`/api/jobs/${jobId}`, {
             method: 'PATCH',
@@ -142,7 +143,7 @@ function ProcessingContent() {
               </p>
             </div>
             {lead.error && (
-              <p className="text-xs text-red-500 shrink-0 max-w-40 truncate">{lead.error}</p>
+              <p className="text-xs text-red-500 break-all">{lead.error}</p>
             )}
           </div>
         ))}
