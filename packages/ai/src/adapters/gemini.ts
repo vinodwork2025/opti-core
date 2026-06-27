@@ -106,27 +106,31 @@ export class GeminiClient implements AIClient {
   }
 
   async generateIntelligence(input: AIInput): Promise<AIIntelligence> {
-    const model = this.genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
-      generationConfig: {
-        responseMimeType: 'application/json',
-        responseSchema: RESPONSE_SCHEMA,
-        temperature: 0.7,
-      },
-    });
-
+    const models = ['gemini-2.5-flash', 'gemini-2.0-flash-lite'];
+    const generationConfig = {
+      responseMimeType: 'application/json',
+      responseSchema: RESPONSE_SCHEMA,
+      temperature: 0.7,
+    };
+    const prompt = buildPrompt(input);
     let lastError: Error | null = null;
 
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        const result = await model.generateContent(buildPrompt(input));
-        const text = result.response.text();
-        return JSON.parse(text) as AIIntelligence;
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
-        if (attempt < 3) {
-          await new Promise((r) => setTimeout(r, attempt * 1000));
-          continue;
+    for (const modelName of models) {
+      const model = this.genAI.getGenerativeModel({ model: modelName, generationConfig });
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const result = await model.generateContent(prompt);
+          const text = result.response.text();
+          return JSON.parse(text) as AIIntelligence;
+        } catch (error) {
+          lastError = error instanceof Error ? error : new Error(String(error));
+          const is503 = lastError.message.includes('503') || lastError.message.includes('unavailable');
+          const is404 = lastError.message.includes('404') || lastError.message.includes('not found') || lastError.message.includes('no longer available');
+          if (is404) break; // model gone — try next model immediately
+          if (attempt < 3 && is503) {
+            await new Promise((r) => setTimeout(r, attempt * 8000));
+            continue;
+          }
         }
       }
     }
