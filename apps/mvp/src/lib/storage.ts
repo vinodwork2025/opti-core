@@ -25,7 +25,11 @@ export async function listLeads(): Promise<Lead[]> {
     .from('leads')
     .select('data')
     .order('created_at', { ascending: false });
-  if (error || !data) return [];
+  if (error) {
+    console.error('[storage] listLeads error:', error.message, error.code);
+    return [];
+  }
+  if (!data) return [];
   const leads = data.map((row) => row.data as Lead);
   return leads.sort((a, b) => b.opportunity_score - a.opportunity_score);
 }

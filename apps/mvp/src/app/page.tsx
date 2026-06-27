@@ -68,7 +68,13 @@ function LeadRow({ lead }: { lead: Lead }) {
 }
 
 export default async function HomePage() {
-  const leads = await listLeads();
+  let leads: Lead[] = [];
+  let dbError: string | null = null;
+  try {
+    leads = await listLeads();
+  } catch (err) {
+    dbError = err instanceof Error ? err.message : 'Failed to load leads';
+  }
 
   return (
     <div>
@@ -85,7 +91,11 @@ export default async function HomePage() {
         </Link>
       </div>
 
-      {leads.length === 0 ? (
+      {dbError ? (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-xl text-sm font-mono break-all">
+          Supabase error: {dbError}
+        </div>
+      ) : leads.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
           <p className="text-gray-500 text-lg font-medium">No leads yet</p>
           <p className="text-gray-400 text-sm mt-1">Upload a CSV to start processing businesses</p>
