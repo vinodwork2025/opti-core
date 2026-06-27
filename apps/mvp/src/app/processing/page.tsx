@@ -85,7 +85,7 @@ function ProcessingContent() {
 
       updatedJob.status = 'done';
       setJob({ ...updatedJob });
-      setTimeout(() => router.push('/'), 2000);
+      setTimeout(() => { window.location.href = '/'; }, 2000);
     }
 
     run().catch(() => router.push('/'));

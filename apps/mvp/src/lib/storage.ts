@@ -30,7 +30,10 @@ export async function listLeads(): Promise<Lead[]> {
     return [];
   }
   if (!data) return [];
-  const leads = data.map((row) => row.data as Lead);
+  const leads = data.map((row) => {
+    const raw = row.data;
+    return (typeof raw === 'string' ? JSON.parse(raw) : raw) as Lead;
+  });
   return leads.sort((a, b) => b.opportunity_score - a.opportunity_score);
 }
 
